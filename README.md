@@ -12,10 +12,10 @@ Automated scheduling for medical student clerkship rotations. <br><br>
 [![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
 <br>
 ## Table of Contents
-- [Try It Out](#-try-it-out)
-- [What Is This?](#-what-is-this?)
-- [How It Works](#-how-it-works)
-- [CSV Formatting](#-csv-formatting)
+- Try It Out
+- What Is This?
+- How It Works
+- CSV Formatting
 
 ## [![🚀 Try It Out](https://img.shields.io/badge/%F0%9F%9A%80-Try_It_Out-brightgreen)](#-try-it-out)
 The "testdrive" folder contains two CSV files of fake data which you're welcome to download and use. (The fake names are silly on purpose.)
@@ -59,6 +59,3 @@ TODO
 The CSV files must be formatted like this, or the app will break:<br>
 Student Data: ID | FirstName | LastName | EmailAddress | Address |TravelMethods | Session# <br>
 Teacher Data: ID | FirstName | LastName | EmailAddress | Address | Availability
-
-### Note
-Complete accuracy is impossible to guarantee. 
