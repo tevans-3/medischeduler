@@ -1,0 +1,45 @@
+OVERVIEW 
+
+There are 3 types of user for this application: teachers, students, and administrators. 
+Each can access a different sub or superset of the available features. Administrators have permission 
+to view and edit all data. Preceptors and students can only view their own information.
+
+Preceptors log in to a private page and, using a calendar-like interface, input the tracks 
+for which they're available to take a clerkship student. 
+
+Preceptors have profiles in which they're required to enter their contact information and 
+specialty interests. Students interested in a particular specialty can then be matched 
+to preceptors who share their specialty interests.  
+
+Students log in to their own private page, where they also have profiles which they're 
+required to fill out with their travel method preferences, specialty interests, and contact information.
+
+Administrators log in to their own page, from which they can see both student and preceptor data. 
+Administrators assign the students to tracks and monitor the submission of student and preceptor data. 
+Once all required data has been submitted, the administrator clicks a button to begin the scheduling 
+process. 
+
+The scheduler is atomic, which means it either generates a successful assignment or nothing. Preceptor 
+and student data is immutable mid-scheduling; it's up to the administrator to keep abreast of changes in 
+student or preceptor data. In the event that something does change, the administrator has to re-run the 
+scheduler to generate new assignments, either for the full group, or for some subset of it. 
+
+The results of a run of the scheduler are visualized on a Google-Maps-like interface in the browser. 
+The administrator can edit the assignments manually at this stage: for example, suppose the scheduler 
+puts student Alice with preceptor Bob, but the administrator is privy to domain knowledge which says Alice has to go 
+with Jim. The administrator can force assign Alice -> Jim. The scheduler will then rerun on the new subset 
+of students / {Alice} and preceptors / {Jim}, and then the results will be again displayed in the browser 
+for further manual editing. 
+
+Once the administrator is satisfied with a particular assignment of say student X to preceptor Y, they can 
+mark that assignment provisionally "COMPLETE". This removes that student and preceptor from future runs of 
+the scheduler. This doesn't publish or officially finalize the assignment. The administrator has to manually 
+click a button to publish the assignment to the student and preceptor. 
+
+Once the administrator is satisifed with all of the assignments, they can click a "Publish" button which broadcasts 
+to each student their assignment information and to each preceptor the students they've been assigned. 
+(Results can be published to all students, or a subset of them, even possibly a singleton subset.)
+Students get an email notification telling them they've been assigned a clerkship preceptor, and then they 
+log into the portal and see who they got. Preceptors similarly get an email and log in, at which point they can see 
+all the students they've been assigned for the academic year. There will eventually be an option for the preceptors 
+to export these student assignments to their calendars (similarly for the students). 

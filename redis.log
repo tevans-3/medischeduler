@@ -1,0 +1,14 @@
+nohup: ignoring input
+67:C 22 Jun 2025 00:17:17.140 # WARNING Memory overcommit must be enabled! Without it, a background save or replication may fail under low memory condition. Being disabled, it can also cause failures without low memory condition, see https://github.com/jemalloc/jemalloc/issues/1328. To fix this issue add 'vm.overcommit_memory = 1' to /etc/sysctl.conf and then reboot or run the command 'sysctl vm.overcommit_memory=1' for this to take effect.
+67:C 22 Jun 2025 00:17:17.227 * oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+67:C 22 Jun 2025 00:17:17.290 * Redis version=8.0.2, bits=64, commit=00000000, modified=1, pid=67, just started
+67:C 22 Jun 2025 00:17:17.317 # Warning: no config file specified, using the default config. In order to specify a config file use redis-server /path/to/redis.conf
+67:M 22 Jun 2025 00:17:17.356 * monotonic clock: POSIX clock_gettime
+67:M 22 Jun 2025 00:17:17.398 * Running mode=standalone, port=6379.
+67:M 22 Jun 2025 00:17:17.431 * Server initialized
+67:M 22 Jun 2025 00:17:17.560 * Loading RDB produced by version 8.0.2
+67:M 22 Jun 2025 00:17:17.597 * RDB age 12 seconds
+67:M 22 Jun 2025 00:17:17.620 * RDB memory usage when created 0.62 Mb
+67:M 22 Jun 2025 00:17:17.641 * Done loading RDB, keys loaded: 0, keys expired: 0.
+67:M 22 Jun 2025 00:17:17.738 * DB loaded from disk: 0.287 seconds
+67:M 22 Jun 2025 00:17:17.751 * Ready to accept connections tcp
