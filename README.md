@@ -17,10 +17,6 @@ Automated scheduling for medical student clerkship rotations. <br><br>
 - How It Works
 - CSV Formatting
 
-## [![🚀 Try It Out](https://img.shields.io/badge/%F0%9F%9A%80-Try_It_Out-brightgreen)](#-try-it-out)
-The "testdrive" folder contains two CSV files of fake data which you're welcome to download and use. (The fake names are silly on purpose.)
-
-
 ## [![What Is This?](https://img.shields.io/badge/%F0%9F%93%9D-What_Is_This%3F-blue)](#-what-is-this?)
 At Canadian medical schools, all 3rd-year medical students are required to complete a clerkship rotation in Family Medicine. 
 
