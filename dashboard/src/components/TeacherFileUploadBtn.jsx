@@ -42,8 +42,13 @@ export default function TeacherFileUpload() {
         dynamicTyping: true,
         skipEmptyLines: true,
         complete: (results) => {
-          setTeacherUploadData(results.data);
-          console.log(results.data);
+          const parsed = results.data.map((row) => ({
+            ...row,
+            availability: typeof row.availability === 'string' ? JSON.parse(row.availability) : row.availability,
+            specialtyInterests: typeof row.specialtyInterests === 'string' ? JSON.parse(row.specialtyInterests) : row.specialtyInterests,
+          }));
+          setTeacherUploadData(parsed);
+          console.log(parsed);
           setTeacherUploadStatus('complete');
           setLoading(false);
         },

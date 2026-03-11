@@ -1,24 +1,21 @@
 import React from 'react';
-import { Typography } from '@mui/material';
-import { styled } from '@mui/material/styles';
-import Button from '@mui/material/Button';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import theme from '../theme'; 
+import { Button, CircularProgress } from '@mui/material';
 
-const VisuallyHiddenInput = styled('input')({
-  position: 'absolute',
-  width: 1,
-  height: 1,
-  padding: 0,
-  margin: -1,
-  overflow: 'hidden',
-  clip: 'rect(0,0,0,0)',
-  whiteSpace: 'nowrap',
-  border: 0,
-});
-
-export default function ProcessingUpload(){
-    return (
-        
-    );
+/**
+ * A button that shows a loading spinner when processing.
+ *
+ * Props:
+ *   loading  - boolean, shows spinner when true
+ *   children - button label text
+ *   ...rest  - any other props passed to MUI Button
+ */
+export default function LoadingButton({ loading = false, children, ...rest }) {
+  return (
+    <Button
+      disabled={loading}
+      {...rest}
+    >
+      {loading ? <CircularProgress size={24} color="inherit" /> : children}
+    </Button>
+  );
 }

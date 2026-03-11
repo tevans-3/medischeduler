@@ -1,221 +1,113 @@
-package.dfm.medischeduler_schedulerservice; 
+package dfm.medischeduler_schedulerservice;
 
-import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.stereotype.Sevice; 
-import org.slf4j.Logger; 
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.stereotype.Service;
-import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.StreamsBuilder;
-import com.fasterxml.jackson.databind.JsonNode;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.IntStream;
-import java.util.ArrayList;
-import javal.util.Set; 
-import java.time.Duration; 
-import java.http;
 
-@Configuration
-@EnableKafka
-@EnableKafkaStreams
-public class KafkaConfig {
+import org.apache.kafka.common.serialization.Serde;
+import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.streams.StreamsBuilder;
+import org.apache.kafka.streams.kstream.Consumed;
+import org.apache.kafka.streams.kstream.KStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.stereotype.Service;
 
-    @Value(value = "${spring.kafka.bootstrap-servers}")
-    private String bootstrapAddress;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-    @Bean(name = KafkaStreamsDefaultConfiguration.DEFAULT_STREAMS_CONFIG_BEAN_NAME)
-    KafkaStreamsConfiguration kStreamsConfig() {
-        Map<String, Object> props = new HashMap<>();
-        props.put(APPLICATION_ID_CONFIG, "schedulerservice");
-        props.put(BOOTSTRAP_SERVERS_CONFIG, bootstrapAddress);
-        props.put(DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
-        props.put(DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
+import dfm.medischeduler_common.model.Assignment;
+import dfm.medischeduler_common.model.Student;
+import dfm.medischeduler_common.model.Teacher;
 
-        return new KafkaStreamsConfiguration(props);
-    }
-}
-
-
-@Configuration 
-@EnableWebSocketMessageBroker 
-public class WebSocketConfig implements WebSocketMessageBrokerConfigurer{ 
-	@Override 
-	public void configureMessageBroker(MessageBrokerRegistry config){
-		config.enableSimpleBroker("/topic"); 
-		config.setApplicationDestinationPrefixes("/upload"); 
-	}
-
-	@Override
-	public void registerStompEndpoints(StompEndpointRegistry registry){
-		registry.addEndpoint("/assignments"); 
-		registry.addEndpoint("/assignments").withSockJS(); 
-	}
-}
-
-@Component
-public class redisAPI { 
-    
-    @Autowired 
-    public RedisTemplate<String, Object> redisTemplate;
-
-    @Autowired
-    public ObjectMapper mapper;
-
-    public Integer getTotalCount(String clientId){
-        return Integer.parseInt(redisTemplate.opsForHash(clientId+":routesProgress", "totalCount")); 
-    }
-    
-    public Integer getProcessedCount(String clientId){
-        return Integer.parseInt(redisTemplate.opsForHash(clientId+":routesProgress", "processedSoFar"));
-    }
-
-    public Integer getFailedCount(String clientId){
-        return Integer.parseInt(redisTemplate.opsForHash(clientId+":routesProgress", "failedSoFar"));
-    }
-
-    public Integer getNotFoundCount(String clientId){
-        return Integer.parseInt(redisTemplate.opsForHash(clientId+":routesProgress", "notFoundSoFar"));
-    }
-
-    public Integer getNumStudents(String clientId){
-        return Integer.parseInt(redisTemplate.get(clientId+":processedCount", "studentCount")); 
-    }
-
-    public Integer getNumTeachers(String clientId){
-        return Integer.parseInt(redisTemplate.get(clientId+":processedCount", "teacherCount"));
-    }
-
-    public Set<String> getStudentIds(String clientId){
-        return redisTemplate.opsForSet().entries(clientId+":students"); 
-    }
-
-    public Set<string> getTeacherIds(String clientId){
-        return redisTemplate.opsForSet().entries(clientId+":teachers");
-    }
-
-    public Student getStudent(String studentId, String clientId){
-        Map<Object, Object> studentData = redisTemplate.opsForHash().entries(clientId+studentId); 
-        Student student = mapper.convertValue(studentData, Student.class);
-        return (studentData == null || studentData.isEmpty()) ? null : student; 
-    }
-
-    public Teacher getTeacher(String teacherId, String clientId){
-        Map<Object, Object> teacherData = redisTemplate.opsForHash().entries(clientId+":"+teacherId);
-        Teacher teacher = mapper.convertValue(teacherData, Teacher.class);
-        return (teacherData == null || teacherData.isEmpty()) ? null : teacher;
-    }
-
-    public List<Teacher> getAllTeachers(String clientId){
-        List<String> keys = getTeacherIds(clientId); 
-        List<Teacher> teachers = teacherJsons.stream()
-            .map(json -> mapper.readValue(json, Teacher.class))
-            .collect(Collectors.toList()); 
-        return teachers;
-    }
-
-    public List<Student> getAllStudents(String clientId){
-        List<String> keys = Arrays.asList(getStudentIds(clientId));
-        List<Student> students = studentJsons.stream()
-            .map(json -> mapper.readValue(json, Student.class))
-            .collect(Collectors.toList());
-        return students;
-    }
-
-    public HashMap<String, String> getOptimalAssignment(String clientId, String studentId){
-        String key = clientId+":optimalAssignments:"+studentId;
-        return redisTemplate.opsForHash.entries(key);
-    }
-
-}
-
-@Component 
-public class Assignment { 
-
-    public Student student; 
-    public Teacher teacher; 
-
-    public void setStudent(Student student){
-        this.student = student; 
-    }
-
-    public void setTeacher(Teacher teacher){
-        this.teacher = teacher; 
-    }
-
-    public Student getStudent(){
-        return this.student; 
-    }
-
-    public Teacher getTeacher(){
-        return this.teacher; 
-    }
-}
-
+/**
+ * Kafka Streams sink that listens for assignment-complete notifications on
+ * {@code OPTIMAL_ASSIGNMENTS_TOPIC} and pushes the results to the frontend
+ * via WebSocket.
+ *
+ * When a message arrives indicating that assignments have been generated:
+ * <ol>
+ *   <li>All students and teachers are loaded from Redis.</li>
+ *   <li>For each student, the optimal teacher assignment is looked up.</li>
+ *   <li>The resulting list of {@link Assignment} objects is serialized to
+ *       JSON and sent to the WebSocket topic
+ *       {@code /topic/{clientId}/upload/assignments}.</li>
+ * </ol>
+ */
 @Service
 public class KafkaSink {
 
-    @Autowired
-    private KafkaTemplate<String, String> kafkaTemplate; 
+    private static final Logger logger = LoggerFactory.getLogger(KafkaSink.class);
+    private static final Serde<String> STRING_SERDE = Serdes.String();
 
     @Autowired
-    private RedisAPI redisApi; 
+    private RedisAPI redisApi;
 
-    @Autowired 
-    private final SimpMessagingTemplate messagingTemplate; 
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
 
-    ObjectMapper mapper = new ObjectMapper();
+    @Autowired
+    private ObjectMapper mapper;
 
-    private static final Logger logger = LoggerFactory.getLogger(KafkaStreams.class); 
-    private String batchId; 
-    private String elemProcessedInLastMin = String.valueOf(0);
-    private Instant processingStartTime = Instant.now(); 
-
-    private static final Serde<String> STRING_SERDE = Serdes.String(); 
+    /**
+     * Defines the Kafka Streams topology for the assignment sink.
+     *
+     * @param streamsBuilder injected by Spring Kafka
+     */
     @Autowired
     void buildPipeline(StreamsBuilder streamsBuilder) {
-        KStream<String, String> messageStream = streamsBuilder.stream("OPTIMAL_ASSIGNMENTS_TOPIC", Consumed.with(STRING_SERDE, STRING_SERDE));
+        KStream<String, String> messageStream = streamsBuilder.stream(
+                "OPTIMAL_ASSIGNMENTS_TOPIC", Consumed.with(STRING_SERDE, STRING_SERDE));
 
         messageStream.foreach((key, value) -> {
-            try { 
-                handleMessage(key, value); 
-                logger.info("(Consumer) Message received: " + value);
-            }catch (Exception e) {
-                logger.error("Error processing message: " + value, e);
+            try {
+                handleMessage(key, value);
+                logger.info("(Sink) Assignment notification received for client: {}", key);
+            } catch (Exception e) {
+                logger.error("Error processing assignment notification: {}", value, e);
             }
         });
-        
     }
 
-    private List<Assignment> getAssignments(String clientId){
+    /**
+     * Builds the full list of assignments and pushes them to the WebSocket.
+     *
+     * @param clientId the client identifier (Kafka key)
+     * @param value    the message value (informational)
+     */
+    private void handleMessage(String clientId, String value) {
+        List<Assignment> assignments = getAssignments(clientId);
 
-        List<Assignment> assignments = new List<Assignment>(); 
+        try {
+            String jsonAssignments = mapper.writeValueAsString(assignments);
+            messagingTemplate.convertAndSend(
+                    "/topic/" + clientId + "/upload/assignments", jsonAssignments);
+            logger.info("Sent {} assignments to WebSocket for client {}", assignments.size(), clientId);
+        } catch (JsonProcessingException e) {
+            logger.error("Failed to serialize assignments for client {}: {}", clientId, e.getMessage());
+        }
+    }
 
-        List<Student> students = redisApi.getAllStudents(clientId); 
-        List<Teacher> teachers = redisApi.getAllTeachers(clientId); 
+    /**
+     * Loads all students and resolves each one's optimal teacher assignment
+     * from Redis.
+     *
+     * @param clientId the client identifier
+     * @return the list of student-teacher assignments
+     */
+    private List<Assignment> getAssignments(String clientId) {
+        List<Assignment> assignments = new ArrayList<>();
+        List<Student> students = redisApi.getAllStudents(clientId);
 
-        String key = clientId+":optimalAssignments";
-
-        for (student : students){
-            Assignment assignment = new Assignment<>(); 
-            
-            String teacherId = redisApi.getOptimalAssignment(clientId, student.getId()); 
-            Teacher teacher = redisApi.getTeacher(teacherId, clientId); 
-
-            assignment.setStudent(student); 
-            assignment.setTeacher(teacher); 
-            assignments.add(assignment); 
+        for (Student student : students) {
+            String teacherId = redisApi.getOptimalAssignment(clientId, student.getId());
+            if (teacherId != null) {
+                Teacher teacher = redisApi.getTeacher("teacher:" + teacherId, clientId);
+                Assignment assignment = new Assignment(student, teacher);
+                assignments.add(assignment);
+            }
         }
         return assignments;
-    }
-
-    private void handleMessage(String key, String value) {
-        String clientId = key; 
-        List<Assignments> assignments = getAssignments(clientId);
-
-        String jsonAssignments = mapper.writeValueAsString(assignments);  
-        messagingTemplate.convertAndSend("/topic"+clientId+"/upload/assignments", jsonAssignments); 
     }
 }

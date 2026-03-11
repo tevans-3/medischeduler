@@ -64,8 +64,13 @@ export default function StudentFileUpload() {
         dynamicTyping: true,
         skipEmptyLines: true,
         complete: (results) => {
-          setStudentUploadData(results.data);
-          console.log(results.data);
+          const parsed = results.data.map((row) => ({
+            ...row,
+            specialtyInterests: typeof row.specialtyInterests === 'string' ? JSON.parse(row.specialtyInterests) : row.specialtyInterests,
+            weightedPreferences: typeof row.weightedPreferences === 'string' ? JSON.parse(row.weightedPreferences) : row.weightedPreferences,
+          }));
+          setStudentUploadData(parsed);
+          console.log(parsed);
           setStudentUploadStatus('complete');
           setLoading(false);
         },

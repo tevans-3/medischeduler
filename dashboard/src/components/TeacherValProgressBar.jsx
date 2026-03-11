@@ -27,7 +27,8 @@ const BorderLinearProgress = styled(LinearProgress)(({ theme }) => ({
 }));
 
 export default function CustomizedProgressBars() {
-  const { teacherUploadStatus, teacherValStatus, setTeacherValStatus, isCheckedTeacherBox, setIsCheckedTeacherBox} = useUpload();
+  const { teacherUploadStatus, teacherValStatus, studentUploadStatus, studentValStatus, 
+          setTeacherValStatus, isCheckedTeacherBox, setIsCheckedTeacherBox} = useUpload();
 
   const showTeacherValStatus= { 
     checking: 'Validating teacher data...',
@@ -37,8 +38,13 @@ export default function CustomizedProgressBars() {
 
   const [valProgress, setValProgress] = useState(0); 
 
+  useEffect(() => { 
+      if (Math.min(valProgress + Math.random()*10, 100) == 100)
+            setTeacherValStatus('complete')
+  }, [valProgress]); 
+
   useEffect(() => {
-        if (teacherUploadStatus !== "complete") return; 
+       if (teacherUploadStatus !== "complete") return; 
         const timer = setInterval(() => {
           setValProgress((oldProgress) => {
             const diff = Math.random() * 10;
@@ -47,7 +53,6 @@ export default function CustomizedProgressBars() {
               setTimeout(() => {
                   clearInterval(timer);
               }, 2000);
-              setTeacherValStatus('complete');
             }
             return next; 
             
@@ -56,52 +61,50 @@ export default function CustomizedProgressBars() {
           return () => {
             clearInterval(timer);
           };
-        }, [teacherUploadStatus]);
+        }, [teacherUploadStatus, studentUploadStatus, studentValStatus]);
   
   return (
     <Box sx = {{position: 'relative', width:'100%'}}>
     <BorderLinearProgress variant="determinate" value={valProgress}/>
-    <Typography 
-        variant='body2' 
-        color ='#f2cd00'
+    <Typography
+        variant='body2'
+        color='#f2cd00'
         sx={{
             position: 'absolute',
             textAlign: 'center',
-            top: '50%', 
-            left: '-50%',
-            right:0,
-            transform: 'translateY(-50%)', 
-        }}        
+            top: '50%',
+            left: 0,
+            width: '50%',
+            transform: 'translateY(-50%)',
+            px: 1,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+        }}
     >
         {showTeacherValStatus}
     </Typography>
-    <Box sx={{width:'20%', height:'20%'}}>
-      <Checkbox 
+    <Box sx={{ position: 'absolute', top: 5, left: '52%', width: 100, height: 100 }}>
+      <Checkbox
         disabled
         checked={isCheckedTeacherBox}
         sx={{
-            position: 'absolute',
-            //textAlign: 'right',
-            top: '0%',
-            left:'51.5%',
-            width: '100%',
-            height: '100%',
-            '& .MuiSvgIcon-root': {
-                fontSize: '100px',
-                color:'#007c41',           
-            },
-            "&.MuiCheckbox-root": {
-                borderRadius: 0,
-                width:'6%',
-                padding: 0,
-            },
-            "&.Mui-checked": {
-                backgroundColor: "#f2cd00",
-                width:'6%',
-            }
-          }}>       
-        </Checkbox>
-      </Box>
+              width: '65%;',
+              height: '65%;',
+              padding: 0,
+              borderRadius: 0,
+              '& .MuiSvgIcon-root': {
+                  fontSize: 75,
+                  height: '150%;',
+                  width: '175%;',
+                  color: '#007c41',
+              },
+              "&.Mui-checked": {
+                 backgroundColor: "#f2cd00",
+              },
+        }}
+      />
+    </Box>
     </Box>
   );
 }

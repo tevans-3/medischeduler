@@ -40,7 +40,12 @@ export default function CustomizedProgressBars() {
   const [valProgress, setValProgress] = useState(0); 
 
   useEffect(() => {
-        if (studentUploadStatus !== "complete") return; 
+      if (Math.min(valProgress + Math.random()*10, 100) == 100)
+        setStudentValStatus('complete'); 
+  }, [valProgress]); 
+
+  useEffect(() => {
+        if (studentUploadStatus !== "complete") return;
         if (studentValStatus == "complete") return;
         const timer = setInterval(() => {
           setValProgress((oldProgress) => {
@@ -50,7 +55,7 @@ export default function CustomizedProgressBars() {
               setTimeout(() => {
                   clearInterval(timer);
               }, 2000);
-              setStudentValStatus('complete');
+
             }
             return next; 
             
@@ -65,47 +70,45 @@ export default function CustomizedProgressBars() {
     return (
       <Box sx = {{position: 'relative', width:'100%'}}>
       <BorderLinearProgress variant="determinate" value={valProgress}/>
-      <Typography 
-          variant='body2' 
-          color ='#f2cd00'
+      <Typography
+          variant='body2'
+          color='#f2cd00'
           sx={{
               position: 'absolute',
               textAlign: 'center',
-              top: '50%', 
-              left: '-50%',
-              right:0,
-              transform: 'translateY(-50%)', 
-          }}        
+              top: '50%',
+              left: 0,
+              width: '50%',
+              transform: 'translateY(-50%)',
+              px: 1,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+          }}
       >
           {showStudentValStatus}
       </Typography>
-      <Box sx={{width:'20%', height:'20%'}}>
-        <Checkbox 
+      <Box sx={{ position: 'absolute', top: 5, left: '52%', width: 100, height: 100 }}>
+        <Checkbox
           disabled
           checked={isCheckedStudentBox}
           sx={{
-              position: 'absolute',
-              //textAlign: 'right',
-              top: '0%',
-              left:'51.5%',
-              width: '100%',
-              height: '100%',
+              width: '65%;',
+              height: '65%;',
+              padding: 0,
+              borderRadius: 0,
               '& .MuiSvgIcon-root': {
-                  fontSize: '100px',
-                  color:'#007c41',           
-              },
-                "&.MuiCheckbox-root": {
-                  borderRadius: 0,
-                  width:'6%',
-                  padding: 0,
+                  fontSize: 75,
+                  height: '150%;',
+                  width: '175%;',
+                  color: '#007c41',
               },
               "&.Mui-checked": {
-                  backgroundColor: "#f2cd00",
-                  width:'6%',
+                 backgroundColor: "#f2cd00",
               },
-            }}>       
-          </Checkbox>
-        </Box>
+          }}
+        />
+      </Box>
       </Box>
     );
   }
