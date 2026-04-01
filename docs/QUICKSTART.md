@@ -1,6 +1,6 @@
 # MediScheduler Quickstart Guide
 
-Get MediScheduler running locally in under 10 minutes.
+Get MediScheduler running locally in under 10 minutes
 
 ## Prerequisites
 
